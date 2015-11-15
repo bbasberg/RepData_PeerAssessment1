@@ -1,0 +1,64 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+setwd("~/Desktop/coursera/RepData_PeerAssessment1")
+library("knitr")
+
+
+## Loading and preprocessing the data
+ path = "~/Desktop/coursera/RepData_PeerAssessment1/RepData_PeerAssessment1/"
+unzip(paste(path, "activity.zip", sep = ""), exdir = path)
+rawdata = read.csv(paste(path, "activity.csv", sep = ""))
+
+
+## What is mean total number of steps taken per day?
+
+mean(steps.date$steps)
+median(steps.date$steps)
+
+## What is the average daily activity pattern?
+
+steps.interval <- aggregate(steps ~ interval, data = rawdata, FUN = mean)
+plot(steps.interval, type = "l")
+
+steps.interval$interval[which.max(steps.interval$steps)]
+
+## Imputing missing values
+sum(is.na(rawdata))
+
+rawdata <- merge(rawdata, steps.interval, by = "interval", suffixes = c("", 
+    ".y"))
+nas <- is.na(rawdata$steps)
+rawdata$steps[nas] <- rawdata$steps.y[nas]
+rawdata <- rawdata[, c(1:3)]
+
+steps.date <- aggregate(steps ~ date, data = rawdata, FUN = sum)
+barplot(steps.date$steps, names.arg = steps.date$date, col=mycols, xlab = "date", ylab = "steps")
+
+
+mean(steps.date$steps)
+
+median(steps.date$steps)
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+daytype <- function(date) {
+    if (weekdays(as.Date(date)) %in% c("Saturday", "Sunday")) {
+        "weekend"
+    } else {
+        "weekday"
+    }
+}
+rawdata$daytype <- as.factor(sapply(rawdata$date, daytype))
+
+par(mfrow = c(2, 1))
+for (type in c("weekend", "weekday")) {
+    steps.type <- aggregate(steps ~ interval, data = rawdata, subset = rawdata$daytype == 
+        type, FUN = mean)
+    plot(steps.type, type = "l", main = type)
+}
+
+
